@@ -144,30 +144,36 @@
             position: relative;
         }
 
+        .phrase-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+
         .phrase-text {
             font-size: 1.2rem;
             font-weight: bold;
-            margin-bottom: 0.5rem;
             color: var(--primary-color);
-        }
-
-        .phrase-meaning {
-            margin-bottom: 0.5rem;
-        }
-
-        .phrase-notes {
-            font-style: italic;
-            color: #aaa;
+            flex: 1;
         }
 
         .phrase-folder {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
             background-color: var(--folder-color);
             padding: 0.2rem 0.5rem;
             border-radius: 4px;
             font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+
+        .phrase-meaning, .phrase-meaning-ja {
+            margin-bottom: 0.5rem;
+        }
+
+        .phrase-notes, .phrase-notes-ja {
+            font-style: italic;
+            color: #aaa;
+            margin-bottom: 0.5rem;
         }
 
         .delete-phrase {
@@ -224,6 +230,23 @@
             margin-top: 1rem;
             gap: 0.5rem;
         }
+
+        .language-tabs {
+            display: flex;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid #555;
+        }
+
+        .language-tab {
+            padding: 0.3rem 0.8rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .language-tab.active {
+            border-bottom: 2px solid var(--primary-color);
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -257,12 +280,20 @@
             <input type="text" id="phrase" placeholder="Enter a phrase">
         </div>
         <div class="form-group">
-            <label for="meaning">Meaning</label>
-            <input type="text" id="meaning" placeholder="Enter the meaning">
+            <label for="meaning">Meaning (English)</label>
+            <input type="text" id="meaning" placeholder="Enter the meaning in English">
         </div>
         <div class="form-group">
-            <label for="notes">Notes</label>
-            <textarea id="notes" placeholder="Enter any additional notes"></textarea>
+            <label for="meaning-ja">意味 (日本語)</label>
+            <input type="text" id="meaning-ja" placeholder="日本語で意味を入力">
+        </div>
+        <div class="form-group">
+            <label for="notes">Notes (English)</label>
+            <textarea id="notes" placeholder="Enter any additional notes in English"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="notes-ja">注釈 (日本語)</label>
+            <textarea id="notes-ja" placeholder="日本語で追加の注釈を入力"></textarea>
         </div>
         <button id="add-phrase">Add Phrase</button>
     </div>
@@ -307,7 +338,8 @@
             folders: ['General'],
             phrases: [],
             currentFolder: 'General',
-            editingFolder: null
+            editingFolder: null,
+            currentLanguage: 'en'
         };
 
         // DOM elements
@@ -339,53 +371,70 @@
 
         // Language toggle functionality
         languageToggle.addEventListener('click', () => {
-            if (languageToggle.textContent === '日本語') {
+            if (state.currentLanguage === 'en') {
+                state.currentLanguage = 'ja';
                 languageToggle.textContent = 'English';
-                // Update UI to Japanese
-                document.querySelector('h1').textContent = 'フレーズリスト';
-                document.querySelector('label[for="folder-select"]').textContent = 'フォルダ';
-                document.querySelector('label[for="phrase"]').textContent = 'フレーズ';
-                document.querySelector('#phrase').placeholder = 'フレーズを入力';
-                document.querySelector('label[for="meaning"]').textContent = '意味';
-                document.querySelector('#meaning').placeholder = '意味を入力';
-                document.querySelector('label[for="notes"]').textContent = '注釈';
-                document.querySelector('#notes').placeholder = '追加の注釈を入力';
-                document.querySelector('#add-phrase').textContent = 'フレーズを追加';
-                document.querySelector('#add-folder').textContent = '+ フォルダを追加';
-                document.querySelector('footer p').innerHTML = '連絡先<br><a href="mailto:mementomorikatsu@gmail.com" class="contact-link">mementomorikatsu@gmail.com</a>';
-                document.querySelector('#modal-title').textContent = 'フォルダを追加';
-                document.querySelector('#folder-name').placeholder = 'フォルダ名を入力';
-                document.querySelector('#cancel-folder').textContent = 'キャンセル';
-                document.querySelector('#save-folder').textContent = '保存';
-                document.querySelector('#delete-modal h3').textContent = '削除の確認';
-                document.querySelector('#delete-modal p').textContent = 'このフレーズを削除しますか？';
-                document.querySelector('#cancel-delete').textContent = 'キャンセル';
-                document.querySelector('#confirm-delete').textContent = '削除';
+                updateUIToJapanese();
             } else {
+                state.currentLanguage = 'en';
                 languageToggle.textContent = '日本語';
-                // Update UI to English
-                document.querySelector('h1').textContent = 'Phrase List';
-                document.querySelector('label[for="folder-select"]').textContent = 'Folder';
-                document.querySelector('label[for="phrase"]').textContent = 'Phrase';
-                document.querySelector('#phrase').placeholder = 'Enter a phrase';
-                document.querySelector('label[for="meaning"]').textContent = 'Meaning';
-                document.querySelector('#meaning').placeholder = 'Enter the meaning';
-                document.querySelector('label[for="notes"]').textContent = 'Notes';
-                document.querySelector('#notes').placeholder = 'Enter any additional notes';
-                document.querySelector('#add-phrase').textContent = 'Add Phrase';
-                document.querySelector('#add-folder').textContent = '+ Add Folder';
-                document.querySelector('footer p').innerHTML = 'Contact me<br><a href="mailto:mementomorikatsu@gmail.com" class="contact-link">mementomorikatsu@gmail.com</a>';
-                document.querySelector('#modal-title').textContent = 'Add New Folder';
-                document.querySelector('#folder-name').placeholder = 'Enter folder name';
-                document.querySelector('#cancel-folder').textContent = 'Cancel';
-                document.querySelector('#save-folder').textContent = 'Save';
-                document.querySelector('#delete-modal h3').textContent = 'Confirm Deletion';
-                document.querySelector('#delete-modal p').textContent = 'Are you sure you want to delete this phrase?';
-                document.querySelector('#cancel-delete').textContent = 'Cancel';
-                document.querySelector('#confirm-delete').textContent = 'Delete';
+                updateUIToEnglish();
             }
+            renderPhrases();
             saveState();
         });
+
+        function updateUIToJapanese() {
+            document.querySelector('h1').textContent = 'フレーズリスト';
+            document.querySelector('label[for="folder-select"]').textContent = 'フォルダ';
+            document.querySelector('label[for="phrase"]').textContent = 'フレーズ';
+            document.querySelector('#phrase').placeholder = 'フレーズを入力';
+            document.querySelector('label[for="meaning"]').textContent = '意味 (英語)';
+            document.querySelector('#meaning').placeholder = '英語で意味を入力';
+            document.querySelector('label[for="meaning-ja"]').textContent = '意味 (日本語)';
+            document.querySelector('#meaning-ja').placeholder = '日本語で意味を入力';
+            document.querySelector('label[for="notes"]').textContent = '注釈 (英語)';
+            document.querySelector('#notes').placeholder = '英語で追加の注釈を入力';
+            document.querySelector('label[for="notes-ja"]').textContent = '注釈 (日本語)';
+            document.querySelector('#notes-ja').placeholder = '日本語で追加の注釈を入力';
+            document.querySelector('#add-phrase').textContent = 'フレーズを追加';
+            document.querySelector('#add-folder').textContent = '+ フォルダを追加';
+            document.querySelector('footer p').innerHTML = '連絡先<br><a href="mailto:mementomorikatsu@gmail.com" class="contact-link">mementomorikatsu@gmail.com</a>';
+            document.querySelector('#modal-title').textContent = 'フォルダを追加';
+            document.querySelector('#folder-name').placeholder = 'フォルダ名を入力';
+            document.querySelector('#cancel-folder').textContent = 'キャンセル';
+            document.querySelector('#save-folder').textContent = '保存';
+            document.querySelector('#delete-modal h3').textContent = '削除の確認';
+            document.querySelector('#delete-modal p').textContent = 'このフレーズを削除しますか？';
+            document.querySelector('#cancel-delete').textContent = 'キャンセル';
+            document.querySelector('#confirm-delete').textContent = '削除';
+        }
+
+        function updateUIToEnglish() {
+            document.querySelector('h1').textContent = 'Phrase List';
+            document.querySelector('label[for="folder-select"]').textContent = 'Folder';
+            document.querySelector('label[for="phrase"]').textContent = 'Phrase';
+            document.querySelector('#phrase').placeholder = 'Enter a phrase';
+            document.querySelector('label[for="meaning"]').textContent = 'Meaning (English)';
+            document.querySelector('#meaning').placeholder = 'Enter the meaning in English';
+            document.querySelector('label[for="meaning-ja"]').textContent = '意味 (日本語)';
+            document.querySelector('#meaning-ja').placeholder = '日本語で意味を入力';
+            document.querySelector('label[for="notes"]').textContent = 'Notes (English)';
+            document.querySelector('#notes').placeholder = 'Enter any additional notes in English';
+            document.querySelector('label[for="notes-ja"]').textContent = '注釈 (日本語)';
+            document.querySelector('#notes-ja').placeholder = '日本語で追加の注釈を入力';
+            document.querySelector('#add-phrase').textContent = 'Add Phrase';
+            document.querySelector('#add-folder').textContent = '+ Add Folder';
+            document.querySelector('footer p').innerHTML = 'Contact me<br><a href="mailto:mementomorikatsu@gmail.com" class="contact-link">mementomorikatsu@gmail.com</a>';
+            document.querySelector('#modal-title').textContent = 'Add New Folder';
+            document.querySelector('#folder-name').placeholder = 'Enter folder name';
+            document.querySelector('#cancel-folder').textContent = 'Cancel';
+            document.querySelector('#save-folder').textContent = 'Save';
+            document.querySelector('#delete-modal h3').textContent = 'Confirm Deletion';
+            document.querySelector('#delete-modal p').textContent = 'Are you sure you want to delete this phrase?';
+            document.querySelector('#cancel-delete').textContent = 'Cancel';
+            document.querySelector('#confirm-delete').textContent = 'Delete';
+        }
 
         // Folder management
         function renderFolders() {
@@ -424,7 +473,7 @@
             if (filteredPhrases.length === 0) {
                 const emptyMessage = document.createElement('div');
                 emptyMessage.className = 'phrase-card';
-                emptyMessage.textContent = languageToggle.textContent === '日本語' ? 
+                emptyMessage.textContent = state.currentLanguage === 'ja' ? 
                     'このフォルダにはフレーズがありません。' : 
                     'No phrases in this folder.';
                 phraseList.appendChild(emptyMessage);
@@ -434,22 +483,141 @@
             filteredPhrases.forEach((phrase, index) => {
                 const phraseCard = document.createElement('div');
                 phraseCard.className = 'phrase-card';
-                phraseCard.innerHTML = `
-                    <div class="phrase-folder">${phrase.folder}</div>
-                    <div class="phrase-text">${phrase.phrase}</div>
-                    <div class="phrase-meaning"><strong>${languageToggle.textContent === '日本語' ? '意味' : 'Meaning'}:</strong> ${phrase.meaning || (languageToggle.textContent === '日本語' ? '意味なし' : 'No meaning provided')}</div>
-                    ${phrase.notes ? `<div class="phrase-notes"><strong>${languageToggle.textContent === '日本語' ? '注釈' : 'Notes'}:</strong> ${phrase.notes}</div>` : ''}
-                    <button class="delete-phrase" data-index="${index}">${languageToggle.textContent === '日本語' ? '削除' : 'Delete'}</button>
-                `;
-                phraseList.appendChild(phraseCard);
-            });
-
-            // Add event listeners to delete buttons
-            document.querySelectorAll('.delete-phrase').forEach(button => {
-                button.addEventListener('click', (e) => {
+                
+                // Create header with phrase and folder
+                const header = document.createElement('div');
+                header.className = 'phrase-header';
+                
+                const phraseText = document.createElement('div');
+                phraseText.className = 'phrase-text';
+                phraseText.textContent = phrase.phrase;
+                
+                const phraseFolder = document.createElement('div');
+                phraseFolder.className = 'phrase-folder';
+                phraseFolder.textContent = phrase.folder;
+                
+                header.appendChild(phraseText);
+                header.appendChild(phraseFolder);
+                
+                // Create meaning section with language tabs
+                const meaningContainer = document.createElement('div');
+                
+                if (phrase.meaning || phrase.meaning_ja) {
+                    const meaningTabs = document.createElement('div');
+                    meaningTabs.className = 'language-tabs';
+                    
+                    if (phrase.meaning) {
+                        const enTab = document.createElement('div');
+                        enTab.className = `language-tab ${state.currentLanguage === 'en' ? 'active' : ''}`;
+                        enTab.textContent = 'EN';
+                        enTab.addEventListener('click', () => {
+                            state.currentLanguage = 'en';
+                            renderPhrases();
+                        });
+                        meaningTabs.appendChild(enTab);
+                    }
+                    
+                    if (phrase.meaning_ja) {
+                        const jaTab = document.createElement('div');
+                        jaTab.className = `language-tab ${state.currentLanguage === 'ja' ? 'active' : ''}`;
+                        jaTab.textContent = 'JA';
+                        jaTab.addEventListener('click', () => {
+                            state.currentLanguage = 'ja';
+                            renderPhrases();
+                        });
+                        meaningTabs.appendChild(jaTab);
+                    }
+                    
+                    meaningContainer.appendChild(meaningTabs);
+                    
+                    const meaningContent = document.createElement('div');
+                    if (phrase.meaning && state.currentLanguage === 'en') {
+                        const meaningDiv = document.createElement('div');
+                        meaningDiv.className = 'phrase-meaning';
+                        meaningDiv.innerHTML = `<strong>Meaning:</strong> ${phrase.meaning}`;
+                        meaningContent.appendChild(meaningDiv);
+                    }
+                    
+                    if (phrase.meaning_ja && state.currentLanguage === 'ja') {
+                        const meaningJaDiv = document.createElement('div');
+                        meaningJaDiv.className = 'phrase-meaning-ja';
+                        meaningJaDiv.innerHTML = `<strong>意味:</strong> ${phrase.meaning_ja}`;
+                        meaningContent.appendChild(meaningJaDiv);
+                    }
+                    
+                    meaningContainer.appendChild(meaningContent);
+                }
+                
+                // Create notes section with language tabs
+                const notesContainer = document.createElement('div');
+                
+                if (phrase.notes || phrase.notes_ja) {
+                    const notesTabs = document.createElement('div');
+                    notesTabs.className = 'language-tabs';
+                    
+                    if (phrase.notes) {
+                        const enTab = document.createElement('div');
+                        enTab.className = `language-tab ${state.currentLanguage === 'en' ? 'active' : ''}`;
+                        enTab.textContent = 'EN';
+                        enTab.addEventListener('click', () => {
+                            state.currentLanguage = 'en';
+                            renderPhrases();
+                        });
+                        notesTabs.appendChild(enTab);
+                    }
+                    
+                    if (phrase.notes_ja) {
+                        const jaTab = document.createElement('div');
+                        jaTab.className = `language-tab ${state.currentLanguage === 'ja' ? 'active' : ''}`;
+                        jaTab.textContent = 'JA';
+                        jaTab.addEventListener('click', () => {
+                            state.currentLanguage = 'ja';
+                            renderPhrases();
+                        });
+                        notesTabs.appendChild(jaTab);
+                    }
+                    
+                    notesContainer.appendChild(notesTabs);
+                    
+                    const notesContent = document.createElement('div');
+                    if (phrase.notes && state.currentLanguage === 'en') {
+                        const notesDiv = document.createElement('div');
+                        notesDiv.className = 'phrase-notes';
+                        notesDiv.innerHTML = `<strong>Notes:</strong> ${phrase.notes}`;
+                        notesContent.appendChild(notesDiv);
+                    }
+                    
+                    if (phrase.notes_ja && state.currentLanguage === 'ja') {
+                        const notesJaDiv = document.createElement('div');
+                        notesJaDiv.className = 'phrase-notes-ja';
+                        notesJaDiv.innerHTML = `<strong>注釈:</strong> ${phrase.notes_ja}`;
+                        notesContent.appendChild(notesJaDiv);
+                    }
+                    
+                    notesContainer.appendChild(notesContent);
+                }
+                
+                // Create delete button
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'delete-phrase';
+                deleteBtn.textContent = state.currentLanguage === 'ja' ? '削除' : 'Delete';
+                deleteBtn.setAttribute('data-index', index);
+                deleteBtn.addEventListener('click', (e) => {
                     const index = parseInt(e.target.getAttribute('data-index'));
                     showDeleteModal(index);
                 });
+                
+                // Assemble the card
+                phraseCard.appendChild(header);
+                if (phrase.meaning || phrase.meaning_ja) {
+                    phraseCard.appendChild(meaningContainer);
+                }
+                if (phrase.notes || phrase.notes_ja) {
+                    phraseCard.appendChild(notesContainer);
+                }
+                phraseCard.appendChild(deleteBtn);
+                
+                phraseList.appendChild(phraseCard);
             });
         }
 
@@ -458,8 +626,8 @@
             state.editingFolder = editing ? folderName : null;
             folderNameInput.value = editing ? folderName : '';
             document.querySelector('#modal-title').textContent = editing ? 
-                (languageToggle.textContent === '日本語' ? 'フォルダを編集' : 'Edit Folder') : 
-                (languageToggle.textContent === '日本語' ? 'フォルダを追加' : 'Add New Folder');
+                (state.currentLanguage === 'ja' ? 'フォルダを編集' : 'Edit Folder') : 
+                (state.currentLanguage === 'ja' ? 'フォルダを追加' : 'Add New Folder');
             folderModal.style.display = 'flex';
             folderNameInput.focus();
         }
@@ -472,6 +640,10 @@
         function showDeleteModal(index) {
             deleteModal.setAttribute('data-index', index);
             deleteModal.style.display = 'flex';
+            document.querySelector('#delete-modal h3').textContent = state.currentLanguage === 'ja' ? '削除の確認' : 'Confirm Deletion';
+            document.querySelector('#delete-modal p').textContent = state.currentLanguage === 'ja' ? 'このフレーズを削除しますか？' : 'Are you sure you want to delete this phrase?';
+            document.querySelector('#cancel-delete').textContent = state.currentLanguage === 'ja' ? 'キャンセル' : 'Cancel';
+            document.querySelector('#confirm-delete').textContent = state.currentLanguage === 'ja' ? '削除' : 'Delete';
         }
 
         function hideDeleteModal() {
@@ -483,18 +655,22 @@
         addPhraseBtn.addEventListener('click', () => {
             const phrase = document.getElementById('phrase').value;
             const meaning = document.getElementById('meaning').value;
+            const meaning_ja = document.getElementById('meaning-ja').value;
             const notes = document.getElementById('notes').value;
+            const notes_ja = document.getElementById('notes-ja').value;
             const folder = document.getElementById('folder-select').value;
 
             if (phrase.trim() === '') {
-                alert(languageToggle.textContent === '日本語' ? 'フレーズを入力してください' : 'Please enter a phrase');
+                alert(state.currentLanguage === 'ja' ? 'フレーズを入力してください' : 'Please enter a phrase');
                 return;
             }
 
             state.phrases.push({
                 phrase,
-                meaning,
-                notes,
+                meaning: meaning || undefined,
+                meaning_ja: meaning_ja || undefined,
+                notes: notes || undefined,
+                notes_ja: notes_ja || undefined,
                 folder
             });
 
@@ -504,7 +680,9 @@
             // Clear the form
             document.getElementById('phrase').value = '';
             document.getElementById('meaning').value = '';
+            document.getElementById('meaning-ja').value = '';
             document.getElementById('notes').value = '';
+            document.getElementById('notes-ja').value = '';
         });
 
         addFolderBtn.addEventListener('click', () => showFolderModal());
@@ -513,7 +691,7 @@
             const folderName = folderNameInput.value.trim();
             
             if (folderName === '') {
-                alert(languageToggle.textContent === '日本語' ? 'フォルダ名を入力してください' : 'Please enter a folder name');
+                alert(state.currentLanguage === 'ja' ? 'フォルダ名を入力してください' : 'Please enter a folder name');
                 return;
             }
 
@@ -537,7 +715,7 @@
                 }
             } else {
                 if (state.folders.includes(folderName)) {
-                    alert(languageToggle.textContent === '日本語' ? 'このフォルダ名は既に存在します' : 'Folder name already exists');
+                    alert(state.currentLanguage === 'ja' ? 'このフォルダ名は既に存在します' : 'Folder name already exists');
                     return;
                 }
                 state.folders.push(folderName);
@@ -576,7 +754,7 @@
                 editingFolder: null
             }));
             localStorage.setItem('phraseAppTheme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
-            localStorage.setItem('phraseAppLanguage', languageToggle.textContent === '日本語' ? 'ja' : 'en');
+            localStorage.setItem('phraseAppLanguage', state.currentLanguage);
         }
 
         function loadState() {
@@ -597,9 +775,13 @@
             }
 
             if (savedLanguage === 'ja') {
+                state.currentLanguage = 'ja';
                 languageToggle.textContent = 'English';
-                // Trigger language update
-                languageToggle.click();
+                updateUIToJapanese();
+            } else {
+                state.currentLanguage = 'en';
+                languageToggle.textContent = '日本語';
+                updateUIToEnglish();
             }
         }
 
