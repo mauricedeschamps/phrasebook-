@@ -13,6 +13,7 @@
             --secondary-color: #3700b3;
             --card-color: #1e1e1e;
             --input-color: #2d2d2d;
+            --folder-color: #333;
         }
 
         .light-mode {
@@ -22,6 +23,7 @@
             --secondary-color: #bb86fc;
             --card-color: #ffffff;
             --input-color: #f0f0f0;
+            --folder-color: #e0e0e0;
         }
 
         body {
@@ -62,10 +64,19 @@
             border-radius: 4px;
             cursor: pointer;
             transition: background-color 0.3s;
+            margin: 0.2rem;
         }
 
         button:hover {
             opacity: 0.9;
+        }
+
+        .button-secondary {
+            background-color: var(--folder-color);
+        }
+
+        .button-danger {
+            background-color: #cf6679;
         }
 
         .form-container {
@@ -86,7 +97,7 @@
             font-weight: bold;
         }
 
-        input, textarea {
+        input, textarea, select {
             width: 100%;
             padding: 0.5rem;
             border: 1px solid #555;
@@ -100,6 +111,26 @@
             resize: vertical;
         }
 
+        .folder-container {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 1rem;
+            gap: 0.5rem;
+        }
+
+        .folder-tab {
+            background-color: var(--folder-color);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .folder-tab.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
         .phrase-list {
             margin: 1rem;
         }
@@ -110,6 +141,7 @@
             margin-bottom: 1rem;
             border-radius: 8px;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
 
         .phrase-text {
@@ -128,6 +160,27 @@
             color: #aaa;
         }
 
+        .phrase-folder {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: var(--folder-color);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .delete-phrase {
+            position: absolute;
+            bottom: 0.5rem;
+            right: 0.5rem;
+            background-color: transparent;
+            color: #cf6679;
+            border: none;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
         footer {
             text-align: center;
             padding: 1rem;
@@ -143,6 +196,34 @@
         .contact-link:hover {
             text-decoration: underline;
         }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--card-color);
+            padding: 1rem;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 400px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1rem;
+            gap: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -151,11 +232,26 @@
     </header>
 
     <div class="controls">
-        <button id="theme-toggle">Switch to Light Mode</button>
-        <button id="language-toggle">日本語</button>
+        <div>
+            <button id="theme-toggle">Switch to Light Mode</button>
+            <button id="language-toggle">日本語</button>
+        </div>
+        <div>
+            <button id="add-folder" class="button-secondary">+ Add Folder</button>
+        </div>
+    </div>
+
+    <div class="folder-container" id="folder-container">
+        <!-- Folders will be added here -->
     </div>
 
     <div class="form-container">
+        <div class="form-group">
+            <label for="folder-select">Folder</label>
+            <select id="folder-select">
+                <!-- Folders will be added here -->
+            </select>
+        </div>
         <div class="form-group">
             <label for="phrase">Phrase</label>
             <input type="text" id="phrase" placeholder="Enter a phrase">
@@ -180,9 +276,57 @@
         <a href="mailto:mementomorikatsu@gmail.com" class="contact-link">mementomorikatsu@gmail.com</a></p>
     </footer>
 
+    <div class="modal" id="folder-modal">
+        <div class="modal-content">
+            <h3 id="modal-title">Add New Folder</h3>
+            <div class="form-group">
+                <label for="folder-name">Folder Name</label>
+                <input type="text" id="folder-name" placeholder="Enter folder name">
+            </div>
+            <div class="modal-buttons">
+                <button id="cancel-folder">Cancel</button>
+                <button id="save-folder">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="delete-modal">
+        <div class="modal-content">
+            <h3 id="modal-title">Confirm Deletion</h3>
+            <p>Are you sure you want to delete this phrase?</p>
+            <div class="modal-buttons">
+                <button id="cancel-delete">Cancel</button>
+                <button id="confirm-delete" class="button-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Theme toggle functionality
+        // App state
+        let state = {
+            folders: ['General'],
+            phrases: [],
+            currentFolder: 'General',
+            editingFolder: null
+        };
+
+        // DOM elements
         const themeToggle = document.getElementById('theme-toggle');
+        const languageToggle = document.getElementById('language-toggle');
+        const addPhraseBtn = document.getElementById('add-phrase');
+        const phraseList = document.getElementById('phrase-list');
+        const folderContainer = document.getElementById('folder-container');
+        const folderSelect = document.getElementById('folder-select');
+        const addFolderBtn = document.getElementById('add-folder');
+        const folderModal = document.getElementById('folder-modal');
+        const folderNameInput = document.getElementById('folder-name');
+        const saveFolderBtn = document.getElementById('save-folder');
+        const cancelFolderBtn = document.getElementById('cancel-folder');
+        const deleteModal = document.getElementById('delete-modal');
+        const cancelDeleteBtn = document.getElementById('cancel-delete');
+        const confirmDeleteBtn = document.getElementById('confirm-delete');
+
+        // Theme toggle functionality
         themeToggle.addEventListener('click', () => {
             document.body.classList.toggle('light-mode');
             if (document.body.classList.contains('light-mode')) {
@@ -190,16 +334,16 @@
             } else {
                 themeToggle.textContent = 'Switch to Light Mode';
             }
+            saveState();
         });
 
-        // Language toggle functionality (placeholder)
-        const languageToggle = document.getElementById('language-toggle');
+        // Language toggle functionality
         languageToggle.addEventListener('click', () => {
-            // This is a placeholder for actual language switching
             if (languageToggle.textContent === '日本語') {
                 languageToggle.textContent = 'English';
-                // Here you would update all text to Japanese
+                // Update UI to Japanese
                 document.querySelector('h1').textContent = 'フレーズリスト';
+                document.querySelector('label[for="folder-select"]').textContent = 'フォルダ';
                 document.querySelector('label[for="phrase"]').textContent = 'フレーズ';
                 document.querySelector('#phrase').placeholder = 'フレーズを入力';
                 document.querySelector('label[for="meaning"]').textContent = '意味';
@@ -207,11 +351,21 @@
                 document.querySelector('label[for="notes"]').textContent = '注釈';
                 document.querySelector('#notes').placeholder = '追加の注釈を入力';
                 document.querySelector('#add-phrase').textContent = 'フレーズを追加';
+                document.querySelector('#add-folder').textContent = '+ フォルダを追加';
                 document.querySelector('footer p').innerHTML = '連絡先<br><a href="mailto:mementomorikatsu@gmail.com" class="contact-link">mementomorikatsu@gmail.com</a>';
+                document.querySelector('#modal-title').textContent = 'フォルダを追加';
+                document.querySelector('#folder-name').placeholder = 'フォルダ名を入力';
+                document.querySelector('#cancel-folder').textContent = 'キャンセル';
+                document.querySelector('#save-folder').textContent = '保存';
+                document.querySelector('#delete-modal h3').textContent = '削除の確認';
+                document.querySelector('#delete-modal p').textContent = 'このフレーズを削除しますか？';
+                document.querySelector('#cancel-delete').textContent = 'キャンセル';
+                document.querySelector('#confirm-delete').textContent = '削除';
             } else {
                 languageToggle.textContent = '日本語';
-                // Here you would update all text to English
+                // Update UI to English
                 document.querySelector('h1').textContent = 'Phrase List';
+                document.querySelector('label[for="folder-select"]').textContent = 'Folder';
                 document.querySelector('label[for="phrase"]').textContent = 'Phrase';
                 document.querySelector('#phrase').placeholder = 'Enter a phrase';
                 document.querySelector('label[for="meaning"]').textContent = 'Meaning';
@@ -219,33 +373,133 @@
                 document.querySelector('label[for="notes"]').textContent = 'Notes';
                 document.querySelector('#notes').placeholder = 'Enter any additional notes';
                 document.querySelector('#add-phrase').textContent = 'Add Phrase';
+                document.querySelector('#add-folder').textContent = '+ Add Folder';
                 document.querySelector('footer p').innerHTML = 'Contact me<br><a href="mailto:mementomorikatsu@gmail.com" class="contact-link">mementomorikatsu@gmail.com</a>';
+                document.querySelector('#modal-title').textContent = 'Add New Folder';
+                document.querySelector('#folder-name').placeholder = 'Enter folder name';
+                document.querySelector('#cancel-folder').textContent = 'Cancel';
+                document.querySelector('#save-folder').textContent = 'Save';
+                document.querySelector('#delete-modal h3').textContent = 'Confirm Deletion';
+                document.querySelector('#delete-modal p').textContent = 'Are you sure you want to delete this phrase?';
+                document.querySelector('#cancel-delete').textContent = 'Cancel';
+                document.querySelector('#confirm-delete').textContent = 'Delete';
             }
+            saveState();
         });
 
-        // Phrase management functionality
-        const addPhraseBtn = document.getElementById('add-phrase');
-        const phraseList = document.getElementById('phrase-list');
+        // Folder management
+        function renderFolders() {
+            folderContainer.innerHTML = '';
+            folderSelect.innerHTML = '';
+            
+            state.folders.forEach(folder => {
+                // Add to folder tabs
+                const folderTab = document.createElement('div');
+                folderTab.className = `folder-tab ${folder === state.currentFolder ? 'active' : ''}`;
+                folderTab.textContent = folder;
+                folderTab.addEventListener('click', () => {
+                    state.currentFolder = folder;
+                    saveState();
+                    renderFolders();
+                    renderPhrases();
+                });
+                folderContainer.appendChild(folderTab);
 
+                // Add to folder select dropdown
+                const option = document.createElement('option');
+                option.value = folder;
+                option.textContent = folder;
+                folderSelect.appendChild(option);
+            });
+        }
+
+        // Phrase management
+        function renderPhrases() {
+            phraseList.innerHTML = '';
+            
+            const filteredPhrases = state.phrases.filter(
+                phrase => phrase.folder === state.currentFolder
+            );
+            
+            if (filteredPhrases.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.className = 'phrase-card';
+                emptyMessage.textContent = languageToggle.textContent === '日本語' ? 
+                    'このフォルダにはフレーズがありません。' : 
+                    'No phrases in this folder.';
+                phraseList.appendChild(emptyMessage);
+                return;
+            }
+
+            filteredPhrases.forEach((phrase, index) => {
+                const phraseCard = document.createElement('div');
+                phraseCard.className = 'phrase-card';
+                phraseCard.innerHTML = `
+                    <div class="phrase-folder">${phrase.folder}</div>
+                    <div class="phrase-text">${phrase.phrase}</div>
+                    <div class="phrase-meaning"><strong>${languageToggle.textContent === '日本語' ? '意味' : 'Meaning'}:</strong> ${phrase.meaning || (languageToggle.textContent === '日本語' ? '意味なし' : 'No meaning provided')}</div>
+                    ${phrase.notes ? `<div class="phrase-notes"><strong>${languageToggle.textContent === '日本語' ? '注釈' : 'Notes'}:</strong> ${phrase.notes}</div>` : ''}
+                    <button class="delete-phrase" data-index="${index}">${languageToggle.textContent === '日本語' ? '削除' : 'Delete'}</button>
+                `;
+                phraseList.appendChild(phraseCard);
+            });
+
+            // Add event listeners to delete buttons
+            document.querySelectorAll('.delete-phrase').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const index = parseInt(e.target.getAttribute('data-index'));
+                    showDeleteModal(index);
+                });
+            });
+        }
+
+        // Modal functions
+        function showFolderModal(editing = false, folderName = '') {
+            state.editingFolder = editing ? folderName : null;
+            folderNameInput.value = editing ? folderName : '';
+            document.querySelector('#modal-title').textContent = editing ? 
+                (languageToggle.textContent === '日本語' ? 'フォルダを編集' : 'Edit Folder') : 
+                (languageToggle.textContent === '日本語' ? 'フォルダを追加' : 'Add New Folder');
+            folderModal.style.display = 'flex';
+            folderNameInput.focus();
+        }
+
+        function hideFolderModal() {
+            folderModal.style.display = 'none';
+            state.editingFolder = null;
+        }
+
+        function showDeleteModal(index) {
+            deleteModal.setAttribute('data-index', index);
+            deleteModal.style.display = 'flex';
+        }
+
+        function hideDeleteModal() {
+            deleteModal.style.display = 'none';
+            deleteModal.removeAttribute('data-index');
+        }
+
+        // Event listeners
         addPhraseBtn.addEventListener('click', () => {
             const phrase = document.getElementById('phrase').value;
             const meaning = document.getElementById('meaning').value;
             const notes = document.getElementById('notes').value;
+            const folder = document.getElementById('folder-select').value;
 
             if (phrase.trim() === '') {
-                alert('Please enter a phrase');
+                alert(languageToggle.textContent === '日本語' ? 'フレーズを入力してください' : 'Please enter a phrase');
                 return;
             }
 
-            const phraseCard = document.createElement('div');
-            phraseCard.className = 'phrase-card';
-            phraseCard.innerHTML = `
-                <div class="phrase-text">${phrase}</div>
-                <div class="phrase-meaning"><strong>Meaning:</strong> ${meaning || 'No meaning provided'}</div>
-                ${notes ? `<div class="phrase-notes"><strong>Notes:</strong> ${notes}</div>` : ''}
-            `;
+            state.phrases.push({
+                phrase,
+                meaning,
+                notes,
+                folder
+            });
 
-            phraseList.appendChild(phraseCard);
+            saveState();
+            renderPhrases();
 
             // Clear the form
             document.getElementById('phrase').value = '';
@@ -253,12 +507,106 @@
             document.getElementById('notes').value = '';
         });
 
+        addFolderBtn.addEventListener('click', () => showFolderModal());
+
+        saveFolderBtn.addEventListener('click', () => {
+            const folderName = folderNameInput.value.trim();
+            
+            if (folderName === '') {
+                alert(languageToggle.textContent === '日本語' ? 'フォルダ名を入力してください' : 'Please enter a folder name');
+                return;
+            }
+
+            if (state.editingFolder) {
+                // Update folder name in phrases
+                state.phrases.forEach(phrase => {
+                    if (phrase.folder === state.editingFolder) {
+                        phrase.folder = folderName;
+                    }
+                });
+                
+                // Update folder in folders list
+                const index = state.folders.indexOf(state.editingFolder);
+                if (index !== -1) {
+                    state.folders[index] = folderName;
+                }
+                
+                // Update current folder if it was the one being edited
+                if (state.currentFolder === state.editingFolder) {
+                    state.currentFolder = folderName;
+                }
+            } else {
+                if (state.folders.includes(folderName)) {
+                    alert(languageToggle.textContent === '日本語' ? 'このフォルダ名は既に存在します' : 'Folder name already exists');
+                    return;
+                }
+                state.folders.push(folderName);
+            }
+
+            saveState();
+            renderFolders();
+            renderPhrases();
+            hideFolderModal();
+        });
+
+        cancelFolderBtn.addEventListener('click', hideFolderModal);
+
+        confirmDeleteBtn.addEventListener('click', () => {
+            const index = parseInt(deleteModal.getAttribute('data-index'));
+            state.phrases.splice(index, 1);
+            saveState();
+            renderPhrases();
+            hideDeleteModal();
+        });
+
+        cancelDeleteBtn.addEventListener('click', hideDeleteModal);
+
         // Allow adding phrases with Enter key in the phrase field
         document.getElementById('phrase').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 addPhraseBtn.click();
             }
         });
+
+        // State management
+        function saveState() {
+            localStorage.setItem('phraseAppState', JSON.stringify({
+                ...state,
+                // Don't save editingFolder to storage
+                editingFolder: null
+            }));
+            localStorage.setItem('phraseAppTheme', document.body.classList.contains('light-mode') ? 'light' : 'dark');
+            localStorage.setItem('phraseAppLanguage', languageToggle.textContent === '日本語' ? 'ja' : 'en');
+        }
+
+        function loadState() {
+            const savedState = localStorage.getItem('phraseAppState');
+            const savedTheme = localStorage.getItem('phraseAppTheme');
+            const savedLanguage = localStorage.getItem('phraseAppLanguage');
+
+            if (savedState) {
+                const parsedState = JSON.parse(savedState);
+                state.folders = parsedState.folders || ['General'];
+                state.phrases = parsedState.phrases || [];
+                state.currentFolder = parsedState.currentFolder || 'General';
+            }
+
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                themeToggle.textContent = 'Switch to Dark Mode';
+            }
+
+            if (savedLanguage === 'ja') {
+                languageToggle.textContent = 'English';
+                // Trigger language update
+                languageToggle.click();
+            }
+        }
+
+        // Initialize the app
+        loadState();
+        renderFolders();
+        renderPhrases();
     </script>
 </body>
 </html>
