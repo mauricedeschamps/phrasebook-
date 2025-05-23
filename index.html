@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phrase List</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📝</text></svg>">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --primary-color: #bb86fc;
+            --secondary-color: #3700b3;
+            --card-color: #1e1e1e;
+            --input-color: #2d2d2d;
+        }
+
+        .light-mode {
+            --bg-color: #f5f5f5;
+            --text-color: #333333;
+            --primary-color: #6200ee;
+            --secondary-color: #bb86fc;
+            --card-color: #ffffff;
+            --input-color: #f0f0f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            margin: 0;
+            color: white;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            padding: 1rem;
+            background-color: var(--card-color);
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .form-container {
+            background-color: var(--card-color);
+            padding: 1rem;
+            margin: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #555;
+            border-radius: 4px;
+            background-color: var(--input-color);
+            color: var(--text-color);
+        }
+
+        textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .phrase-list {
+            margin: 1rem;
+        }
+
+        .phrase-card {
+            background-color: var(--card-color);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .phrase-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+        }
+
+        .phrase-meaning {
+            margin-bottom: 0.5rem;
+        }
+
+        .phrase-notes {
+            font-style: italic;
+            color: #aaa;
+        }
+
+        footer {
+            text-align: center;
+            padding: 1rem;
+            background-color: var(--card-color);
+            margin-top: 2rem;
+        }
+
+        .contact-link {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .contact-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Phrase List</h1>
+    </header>
+
+    <div class="controls">
+        <button id="theme-toggle">Switch to Light Mode</button>
+        <button id="language-toggle">日本語</button>
+    </div>
+
+    <div class="form-container">
+        <div class="form-group">
+            <label for="phrase">Phrase</label>
+            <input type="text" id="phrase" placeholder="Enter a phrase">
+        </div>
+        <div class="form-group">
+            <label for="meaning">Meaning</label>
+            <input type="text" id="meaning" placeholder="Enter the meaning">
+        </div>
+        <div class="form-group">
+            <label for="notes">Notes</label>
+            <textarea id="notes" placeholder="Enter any additional notes"></textarea>
+        </div>
+        <button id="add-phrase">Add Phrase</button>
+    </div>
+
+    <div class="phrase-list" id="phrase-list">
+        <!-- Phrases will be added here -->
+    </div>
+
+    <footer>
+        <p>Contact me<br>
+        <a href="mailto:mementomorikatsu@gmail.com" class="contact-link">mementomorikatsu@gmail.com</a></p>
+    </footer>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            if (document.body.classList.contains('light-mode')) {
+                themeToggle.textContent = 'Switch to Dark Mode';
+            } else {
+                themeToggle.textContent = 'Switch to Light Mode';
+            }
+        });
+
+        // Language toggle functionality (placeholder)
+        const languageToggle = document.getElementById('language-toggle');
+        languageToggle.addEventListener('click', () => {
+            // This is a placeholder for actual language switching
+            if (languageToggle.textContent === '日本語') {
+                languageToggle.textContent = 'English';
+                // Here you would update all text to Japanese
+                document.querySelector('h1').textContent = 'フレーズリスト';
+                document.querySelector('label[for="phrase"]').textContent = 'フレーズ';
+                document.querySelector('#phrase').placeholder = 'フレーズを入力';
+                document.querySelector('label[for="meaning"]').textContent = '意味';
+                document.querySelector('#meaning').placeholder = '意味を入力';
+                document.querySelector('label[for="notes"]').textContent = '注釈';
+                document.querySelector('#notes').placeholder = '追加の注釈を入力';
+                document.querySelector('#add-phrase').textContent = 'フレーズを追加';
+                document.querySelector('footer p').innerHTML = '連絡先<br><a href="mailto:mementomorikatsu@gmail.com" class="contact-link">mementomorikatsu@gmail.com</a>';
+            } else {
+                languageToggle.textContent = '日本語';
+                // Here you would update all text to English
+                document.querySelector('h1').textContent = 'Phrase List';
+                document.querySelector('label[for="phrase"]').textContent = 'Phrase';
+                document.querySelector('#phrase').placeholder = 'Enter a phrase';
+                document.querySelector('label[for="meaning"]').textContent = 'Meaning';
+                document.querySelector('#meaning').placeholder = 'Enter the meaning';
+                document.querySelector('label[for="notes"]').textContent = 'Notes';
+                document.querySelector('#notes').placeholder = 'Enter any additional notes';
+                document.querySelector('#add-phrase').textContent = 'Add Phrase';
+                document.querySelector('footer p').innerHTML = 'Contact me<br><a href="mailto:mementomorikatsu@gmail.com" class="contact-link">mementomorikatsu@gmail.com</a>';
+            }
+        });
+
+        // Phrase management functionality
+        const addPhraseBtn = document.getElementById('add-phrase');
+        const phraseList = document.getElementById('phrase-list');
+
+        addPhraseBtn.addEventListener('click', () => {
+            const phrase = document.getElementById('phrase').value;
+            const meaning = document.getElementById('meaning').value;
+            const notes = document.getElementById('notes').value;
+
+            if (phrase.trim() === '') {
+                alert('Please enter a phrase');
+                return;
+            }
+
+            const phraseCard = document.createElement('div');
+            phraseCard.className = 'phrase-card';
+            phraseCard.innerHTML = `
+                <div class="phrase-text">${phrase}</div>
+                <div class="phrase-meaning"><strong>Meaning:</strong> ${meaning || 'No meaning provided'}</div>
+                ${notes ? `<div class="phrase-notes"><strong>Notes:</strong> ${notes}</div>` : ''}
+            `;
+
+            phraseList.appendChild(phraseCard);
+
+            // Clear the form
+            document.getElementById('phrase').value = '';
+            document.getElementById('meaning').value = '';
+            document.getElementById('notes').value = '';
+        });
+
+        // Allow adding phrases with Enter key in the phrase field
+        document.getElementById('phrase').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addPhraseBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>
