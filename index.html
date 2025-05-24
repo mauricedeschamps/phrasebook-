@@ -670,13 +670,18 @@
             document.getElementById('edit-phrase').value = phrase.phrase;
             document.getElementById('edit-meaning').value = phrase.meaning || '';
             document.getElementById('edit-note').value = phrase.note || '';
+            
+            // 編集対象のフレーズのフォルダを保持
             state.editingPhraseIndex = index;
+            state.editingFolder = phrase.folder;
+            
             editModal.style.display = 'flex';
         }
 
         function hideEditModal() {
             editModal.style.display = 'none';
             state.editingPhraseIndex = null;
+            state.editingFolder = null;
         }
 
         // Event listeners
@@ -792,10 +797,10 @@
 
             if (state.editingPhraseIndex !== null) {
                 state.phrases[state.editingPhraseIndex] = {
-                    ...state.phrases[state.editingPhraseIndex],
                     phrase,
                     meaning: meaning || undefined,
-                    note: note || undefined
+                    note: note || undefined,
+                    folder: state.editingFolder // 元のフォルダを保持
                 };
                 saveState();
                 renderPhrases();
